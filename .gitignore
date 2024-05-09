@@ -11,6 +11,8 @@ src/test/java/experiments/
 examples/lunix/
 # older copies
 include-*/
+.metals
+.vscode
 
 # hidden files
 *.~
