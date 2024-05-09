@@ -509,7 +509,7 @@ abstract class AbstractAssembler[T <: AbstractCode](private val program: Program
               val altName = m.name.stripPrefix(env.prefix) + "`"
               val thing = if (name.endsWith(".addr")) env.get[ThingInMemory](name.stripSuffix(".addr")) else env.get[ThingInMemory](name + ".array")
               env.things += altName -> ConstantThing(altName, NumericConstant(index, 2), env.get[Type]("pointer"))
-              assembly.append("     ORG 0x" + index.toHexString) // FIXED: * = $ -> ORG 0x
+              assembly.append("    ORG 0x" + index.toHexString) // FIXED: * = $ -> ORG 0x
               assembly.append("    " + bytePseudoopcode + " $2c")
               assembly.append(name + ":")
               val c = thing.toAddress
@@ -530,7 +530,7 @@ abstract class AbstractAssembler[T <: AbstractCode](private val program: Program
         }
         val index = codeAllocators("default").allocateBytes(mem.banks("default"), options, 1, initialized = true, writeable = false, location = AllocationLocation.High, alignment = NoAlignment)
         writeByte("default", index, 2.toByte) // BIT abs
-        assembly.append("     ORG 0x" + index.toHexString) // FIXED: * = $ -> ORG 0x
+        assembly.append("    ORG 0x" + index.toHexString) // FIXED: * = $ -> ORG 0x
         assembly.append("    " + bytePseudoopcode + " 2 ;; end of LUnix relocatable segment")
         justAfterCode += "default" -> (index + 1)
       }
@@ -562,7 +562,7 @@ abstract class AbstractAssembler[T <: AbstractCode](private val program: Program
               rwDataStart = rwDataStart.min(index)
               rwDataEnd = rwDataEnd.max(index + thing.sizeInBytes)
             }
-            assembly.append("     ORG 0x" + index.toHexString)  // FIXED: * = $ -> ORG 0x
+            assembly.append("    ORG 0x" + index.toHexString)  // FIXED: * = $ -> ORG 0x
             assembly.append(name + ":")
             for (item <- items) {
               val w = env
@@ -595,7 +595,7 @@ abstract class AbstractAssembler[T <: AbstractCode](private val program: Program
             }
             val altName = m.name.stripPrefix(env.prefix) + "`"
             env.things += altName -> ConstantThing(altName, NumericConstant(index, 2), env.get[Type]("pointer"))
-            assembly.append("     ORG 0x" + index.toHexString)  // FIXED: * = $ -> ORG 0x
+            assembly.append("    ORG 0x" + index.toHexString)  // FIXED: * = $ -> ORG 0x
             assembly.append(name + ":")
             env.eval(value) match {
               case Some(c) =>
@@ -650,7 +650,7 @@ abstract class AbstractAssembler[T <: AbstractCode](private val program: Program
             Some(ivBank, addr + ivAddr - rwDataStart, value, position)
           case _ => None
         }
-        assembly.append("     ORG 0x" + ivAddr.toHexString)  // FIXED: * = $ -> ORG 0x
+        assembly.append("    ORG 0x" + ivAddr.toHexString)  // FIXED: * = $ -> ORG 0x
         assembly.append("__rwdata_init_start:")
         for (addrs <- 0 until size grouped 16) {
           assembly.append("    " + bytePseudoopcode + " " + addrs.map(i =>
