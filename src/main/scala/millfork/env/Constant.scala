@@ -420,15 +420,15 @@ case class SubbyteConstant(base: Constant, index: Int) extends Constant {
   override def isProvablyDivisibleBy256: Boolean = index == 0 && base.isProvablyDivisibleBy256
 
   override def toString: String = index match {
-    case 0 => s"lo($base)"
-    case 1 => s"hi($base)"
-    case i => s"b$i($base)"
+    case 0 => s"low($base)" // FIXED: lo->low
+    case 1 => s"high($base)" // FIXED: hi->high
+    case i => s"b$i($base)" // TODO: b$->b#
   }
 
   override def toIntelString: String = index match {
-      case 0 => s"lo(${base.toIntelString})"
-      case 1 => s"hi(${base.toIntelString})"
-      case i => s"b$i(${base.toIntelString})"
+      case 0 => s"low(${base.toIntelString})" // FIXED: lo->low
+      case 1 => s"high(${base.toIntelString})" // FIXED: hi->high
+      case i => s"b$i(${base.toIntelString})" // TODO: b$->b#
     }
 
   override def isRelatedTo(v: Thing): Boolean = base.isRelatedTo(v)

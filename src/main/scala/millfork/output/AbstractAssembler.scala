@@ -509,7 +509,7 @@ abstract class AbstractAssembler[T <: AbstractCode](private val program: Program
               val altName = m.name.stripPrefix(env.prefix) + "`"
               val thing = if (name.endsWith(".addr")) env.get[ThingInMemory](name.stripSuffix(".addr")) else env.get[ThingInMemory](name + ".array")
               env.things += altName -> ConstantThing(altName, NumericConstant(index, 2), env.get[Type]("pointer"))
-              assembly.append("* = $" + index.toHexString)
+              assembly.append("     ORG 0x" + index.toHexString) // FIXED: * = $ -> ORG 0x
               assembly.append("    " + bytePseudoopcode + " $2c")
               assembly.append(name + ":")
               val c = thing.toAddress
@@ -530,7 +530,7 @@ abstract class AbstractAssembler[T <: AbstractCode](private val program: Program
         }
         val index = codeAllocators("default").allocateBytes(mem.banks("default"), options, 1, initialized = true, writeable = false, location = AllocationLocation.High, alignment = NoAlignment)
         writeByte("default", index, 2.toByte) // BIT abs
-        assembly.append("* = $" + index.toHexString)
+        assembly.append("     ORG 0x" + index.toHexString) // FIXED: * = $ -> ORG 0x
         assembly.append("    " + bytePseudoopcode + " 2 ;; end of LUnix relocatable segment")
         justAfterCode += "default" -> (index + 1)
       }
@@ -562,7 +562,7 @@ abstract class AbstractAssembler[T <: AbstractCode](private val program: Program
               rwDataStart = rwDataStart.min(index)
               rwDataEnd = rwDataEnd.max(index + thing.sizeInBytes)
             }
-            assembly.append("* = $" + index.toHexString)
+            assembly.append("     ORG 0x" + index.toHexString)  // FIXED: * = $ -> ORG 0x
             assembly.append(name + ":")
             for (item <- items) {
               val w = env
@@ -595,7 +595,7 @@ abstract class AbstractAssembler[T <: AbstractCode](private val program: Program
             }
             val altName = m.name.stripPrefix(env.prefix) + "`"
             env.things += altName -> ConstantThing(altName, NumericConstant(index, 2), env.get[Type]("pointer"))
-            assembly.append("* = $" + index.toHexString)
+            assembly.append("     ORG 0x" + index.toHexString)  // FIXED: * = $ -> ORG 0x
             assembly.append(name + ":")
             env.eval(value) match {
               case Some(c) =>
@@ -650,7 +650,7 @@ abstract class AbstractAssembler[T <: AbstractCode](private val program: Program
             Some(ivBank, addr + ivAddr - rwDataStart, value, position)
           case _ => None
         }
-        assembly.append("* = $" + ivAddr.toHexString)
+        assembly.append("     ORG 0x" + ivAddr.toHexString)  // FIXED: * = $ -> ORG 0x
         assembly.append("__rwdata_init_start:")
         for (addrs <- 0 until size grouped 16) {
           assembly.append("    " + bytePseudoopcode + " " + addrs.map(i =>
@@ -761,13 +761,22 @@ abstract class AbstractAssembler[T <: AbstractCode](private val program: Program
       log.info(f"Free zero page memory: $freeZp B")
     }
 
-    val allLabelList = labelMap.toList ++ unimportantLabelMap.toList
+    val allLabelList = labelMap.toList // FIXED: ++ unimportantLabelMap.toList
     allLabelList.sorted.foreach { case (l, (_, v)) =>
+      val ll = l.stripSuffix(".array") // FIXED: 
       endLabelMap.get(l) match {
         case Some((category, end)) =>
-          assembly += f"$l%-30s = $$$v%04X  ;-$$$end%04X $category%s"
+          // assembly += f"$l%-30s = $$$v%04X  ;-$$$end%04X $category%s" // FIXED:
+          if (category != 'F' && category != 'A' && category != 'V') {
+              assembly += f"$l%-30s EQU $$$v%04X  ;-$$$end%04X $category%s" 
+              if (l != ll) { assembly += f"$ll%-30s EQU $$$v%04X  ;-$$$end%04X $category%s" }
+          }
         case _ =>
-          assembly += f"$l%-30s = $$$v%04X"
+          // assembly += f"$l%-30s = $$$v%04X" // FIXED:
+          val lll = l.replace('#', '_')
+          val llll = lll.stripSuffix(".array")
+          assembly += f"$lll%-30s EQU $$$v%04X"
+          if (lll != llll) { assembly += f"$llll%-30s EQU $$$v%04X" }
       }
     }
     allLabelList.sortBy { case (a, (_, v)) => v -> a }.foreach { case (l, (_, v)) =>
@@ -796,11 +805,15 @@ abstract class AbstractAssembler[T <: AbstractCode](private val program: Program
         }
       }
     }
+    
+    val epilogue: String = platform.assClarifications.apply("epilogue").head // first element SAVESNA usually
+    assembly += epilogue.format(mem.programName)
+
     AssemblerOutput(code, bankLayoutInFile, assembly.toArray, labelMap.toList, endLabelMap.toMap, breakpointSet.toList.sorted)
   }
 
   private def printArrayToAssemblyOutput(assembly: ArrayBuffer[String], name: String, elementType: Type, items: Seq[Expression]): Unit = {
-    if (name.startsWith("textliteral$")) {
+    if (name.startsWith("textliteral#")) { // FIXED: $->#
       var suffix = ""
       var chars = items.lastOption match {
         case Some(LiteralExpression(0, _)) =>
@@ -871,7 +884,9 @@ abstract class AbstractAssembler[T <: AbstractCode](private val program: Program
     val sourceInAssembly = options.flag(CompilationFlag.SourceInAssembly)
     var index = startFrom
     assOut.append(" ")
-    assOut.append("* = $" + startFrom.toHexString)
+    platform.assClarifications.apply("prologue").map { assOut.append(_) } // FIXED: 
+    assOut.append(startFrom.formatted("    ORG %#x")) // FIXED: 
+
     var lastSource = Option.empty[SourceLine]
     for (instr <- code) {
       if (instr.isPrintable) {

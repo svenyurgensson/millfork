@@ -40,7 +40,8 @@ class Platform(
                 val defaultCodeBank: String,
                 val ramInitialValuesBank: Option[String],
                 val outputLabelsFormat: DebugOutputFormat,
-                val outputStyle: OutputStyle.Value
+                val outputStyle: OutputStyle.Value,
+                val assClarifications: Map[String, List[String]]
               ) {
 
   def hasZeroPage: Boolean = cpuFamily == CpuFamily.M6502
@@ -161,6 +162,10 @@ object Platform {
     if (slp) {
       log.error("Default screen encoding cannot be length-prefixed")
     }
+
+    val assPrologue = cs.get(classOf[String], "ass_prologue", "").split(";").filter(_.nonEmpty).toList
+    val assEpilogue = cs.get(classOf[String], "ass_epilogue", "").split(";").filter(_.nonEmpty).toList
+    val assClarifications: Map[String, List[String]] = Map.apply("prologue" -> assPrologue, "epilogue" -> assEpilogue)  
 
     val as = conf.getSection("allocation")
 
@@ -406,7 +411,8 @@ object Platform {
       defaultCodeBank,
       ramInitialValuesBank,
       debugOutputFormat,
-      outputStyle)
+      outputStyle, // FIXED:
+      assClarifications)
   }
 
   @inline

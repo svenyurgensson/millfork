@@ -152,7 +152,7 @@ abstract class AbstractReturnDispatch[T <: AbstractCode] {
     val b = env.get[VariableType]("byte")
     val label = ctx.nextLabel("di")
     val paramArrays = stmt.params.indices.map { ix =>
-      val a = InitializedArray(label + "$" + ix + ".array", None, (paramMins(ix) to paramMaxes(ix)).map { key =>
+      val a = InitializedArray(label + "$" + ix + ".array", None, (paramMins(ix) to paramMaxes(ix)).map { key =>  // TODO: $->#
         map(key)._2.lift(ix).getOrElse(LiteralExpression(0, 1))
       }.toList,
         ctx.function.declaredBank, b, b, readOnly = true, Set.empty, NoAlignment)

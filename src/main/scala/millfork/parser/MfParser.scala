@@ -861,9 +861,10 @@ object MfParser {
   val realLetterOrDigit: P[Unit] = P(CharIn("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz_.1234567890"))
 
   val identifierTail: P[String] =
-    CharsWhileIn("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz_.1234567890", min = 1).rep(min = 1, sep = "$").!
+        CharsWhileIn("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz_.1234567890", min = 1).rep(min = 1, sep = "#").!  // FIXED: $->#
 
-  val identifier: P[String] = (letter ~ ("$".? ~ identifierTail).?).!.map(_.intern()).opaque("<identifier>")
+  val identifier: P[String] = (letter ~ ("#".? ~ identifierTail).?).!.map(_.intern()).opaque("<identifier>")  // FIXED: $->#
+
 
   val doubleQuotedString: P[String] = P("\"" ~/ CharsWhile(c => c != '\"' && c != '\n' && c != '\r').?.! ~ "\"")
 

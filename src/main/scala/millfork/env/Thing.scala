@@ -376,8 +376,7 @@ abstract class MemoryVariable extends VariableInMemory {
 case class UninitializedMemoryVariable(
                                         name: String,
                                         typ: Type,
-                                        alloc:
-                                        VariableAllocationMethod.Value,
+                                        alloc: VariableAllocationMethod.Value,
                                         declaredBank: Option[String],
                                         override val optimizationHints: Set[String],
                                         override val alignment: MemoryAlignment,

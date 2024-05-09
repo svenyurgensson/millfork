@@ -10,7 +10,7 @@ object ConstPureFunctions {
   def checkConstPure(env: Environment, function: NormalFunction): Unit = {
     if (!function.isConstPure) return
     val params = function.params match {
-      case NormalParamSignature(ps) => ps.map(p => p.name.stripPrefix(function.name + "$")).toSet
+      case NormalParamSignature(ps) => ps.map(p => p.name.stripPrefix(function.name + "#")).toSet // FIXED: $->#
     }
     checkConstPure(env, function.code, params)
   }
@@ -106,7 +106,7 @@ object ConstPureFunctions {
   def eval(env: Environment, function: NormalFunction, args: List[Constant]): Option[Constant] = {
     val fitArgs = args.zip(function.params.types).map { case (arg, typ) => arg.fitInto(typ) }
     val params = function.params match {
-      case NormalParamSignature(ps) => ps.zip(fitArgs).map { case (p, arg) => p.name.stripPrefix(function.name + "$") -> arg }.toMap
+      case NormalParamSignature(ps) => ps.zip(fitArgs).map { case (p, arg) => p.name.stripPrefix(function.name + "#") -> arg }.toMap // FIXED: $->#
     }
     eval(env, function.code, params).map(_.fitInto(function.returnType))
   }
