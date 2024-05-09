@@ -761,6 +761,8 @@ abstract class AbstractAssembler[T <: AbstractCode](private val program: Program
       log.info(f"Free zero page memory: $freeZp B")
     }
 
+    assembly += "\n;   ---------- LABELS ----------\n"
+
     val allLabelList = labelMap.toList // FIXED: ++ unimportantLabelMap.toList
     allLabelList.sorted.foreach { case (l, (_, v)) =>
       val ll = l.stripSuffix(".array") // FIXED: 
@@ -768,19 +770,19 @@ abstract class AbstractAssembler[T <: AbstractCode](private val program: Program
         case Some((category, end)) =>
           // assembly += f"$l%-30s = $$$v%04X  ;-$$$end%04X $category%s" // FIXED:
           if (category != 'F' && category != 'A' && category != 'V') {
-              assembly += f"$l%-30s EQU $$$v%04X  ;-$$$end%04X $category%s" 
-              if (l != ll) { assembly += f"$ll%-30s EQU $$$v%04X  ;-$$$end%04X $category%s" }
+              assembly += f"$l%-30s EQU 0x$v%04X  ;-$$$end%04X $category%s" 
+              if (l != ll) { assembly += f"$ll%-30s EQU 0x$v%04X  ;-$$$end%04X $category%s" }
           }
         case _ =>
           // assembly += f"$l%-30s = $$$v%04X" // FIXED:
           val lll = l.replace('#', '_')
           val llll = lll.stripSuffix(".array")
-          assembly += f"$lll%-30s EQU $$$v%04X"
-          if (lll != llll) { assembly += f"$llll%-30s EQU $$$v%04X" }
+          assembly += f"$lll%-30s EQU 0x$v%04X"
+          if (lll != llll) { assembly += f"$llll%-30s EQU 0x$v%04X" }
       }
     }
     allLabelList.sortBy { case (a, (_, v)) => v -> a }.foreach { case (l, (_, v)) =>
-      assembly += f"    ; $$$v%04X = $l%s"
+      assembly += f"    ; 0x$v%04X = $l%s"
     }
 
     var bankLayoutInFile = BankLayoutInFile.empty

@@ -556,7 +556,7 @@ case class Z80Parser(filename: String,
             log.error("Invalid parameters for MULUW", Some(pos))
             (NOP, NoRegisters, None, zero)
         }
-
+        
         case _ =>
           log.error("Unsupported opcode " + opcode, Some(pos))
           imm(NOP)
