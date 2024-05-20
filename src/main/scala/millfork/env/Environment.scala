@@ -2810,7 +2810,8 @@ class Environment(val parent: Option[Environment], val prefix: String, val cpuFa
     case FunctionCallExpression("sizeof" | "typeof", List(ve@VariableExpression(e))) =>
       checkName[Thing]("Type, variable or constant", e, ve.position)
     case FunctionCallExpression(name, params) =>
-      if (name.exists(_.isLetter) && !Environment.predefinedFunctions(name)) {
+      if (name.exists(_.isLetter) && !Environment.predefinedFunctions(name)) {        
+        //log.info(s"-> $params")
         checkName[CallableThing]("Function or type", name, node.position)
       }
       nameCheck(params)
