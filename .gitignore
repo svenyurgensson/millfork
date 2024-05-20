@@ -70,3 +70,4 @@ BBC-*
 
 #heap dumps
 java_pid*
+.tmp

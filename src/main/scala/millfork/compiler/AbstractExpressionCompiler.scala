@@ -351,7 +351,8 @@ object AbstractExpressionCompiler {
               } else if (name.endsWith(".addr")) {
                 env.get[Type]("pointer")
               } else {
-                log.error(s"TypedThing `$name` is not defined", expr.position)
+                log.warn(s"Entity type for: $name not found, set to `byte`!", expr.position)
+                //log.error(s"TypedThing `$name` is not defined", expr.position)
                 b
               }
           }

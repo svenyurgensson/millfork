@@ -354,7 +354,7 @@ class Environment(val parent: Option[Environment], val prefix: String, val cpuFa
       _.get[T](name, position)
     }
   }
-  
+
   def root: Environment = parent.fold(this)(_.root)
 
   def maybeGet[T <: Thing : Manifest](name: String): Option[T] = {
