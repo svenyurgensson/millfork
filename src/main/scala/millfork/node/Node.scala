@@ -462,6 +462,18 @@ sealed trait Statement extends Node {
 
 sealed trait DeclarationStatement extends Statement {
   def name: String
+  var docComment: Option[DocComment] = None
+}
+
+object DeclarationStatement {
+  implicit class DeclarationStatementOps[D<:DeclarationStatement](val declaration: D) extends AnyVal {
+    def docComment(comment: Option[DocComment]): D = {
+      if (comment.isDefined) {
+        declaration.docComment = comment
+      }
+      declaration
+    }
+  }
 }
 
 sealed trait BankedDeclarationStatement extends DeclarationStatement {
@@ -871,3 +883,5 @@ object MosAssemblyStatement {
 
   def nonexistent(opcode: Opcode.Value) = MosAssemblyStatement(opcode, AddrMode.DoesNotExist, LiteralExpression(0, 1), elidability = Elidability.Elidable)
 }
+
+case class DocComment(text: String) extends Node {}

@@ -86,6 +86,11 @@ abstract class MfParser[T](fileId: String, input: String, currentDirectory: Stri
 
   val recursiveMultilineCommentContent: P[Unit] = P(CharsWhile(c => c != '*', min = 0) ~ ("*/" | ("*" ~ recursiveMultilineCommentContent)))
 
+  val docComment: P[DocComment] = for {
+    p <- position()
+    text <- ("/**" ~ recursiveMultilineCommentContent.!)
+  } yield DocComment(text).pos(p)
+
   val multilineComment: P[Unit] = P("/*" ~ !"*" ~ recursiveMultilineCommentContent)
 
   val semicolon: P[Unit] = P(";" ~ CharsWhileIn("; \t", min = 0) ~ position("line break after a semicolon").map(_ => ()) ~ (comment | "\r\n" | "\r" | "\n").opaque("<line break>"))
@@ -208,9 +213,9 @@ abstract class MfParser[T](fileId: String, input: String, currentDirectory: Stri
     case x => x.toString
   } | textLiteralAtom.!
 
-  val importStatement: P[Seq[ImportStatement]] = ("import" ~ !letterOrDigit ~/ SWS ~/
+  val importStatement: P[Seq[ImportStatement]] = (position() ~ "import" ~ !letterOrDigit ~/ SWS ~/
     identifier.rep(min = 1, sep = "/") ~ HWS ~ ("<" ~/ HWS ~/ quotedAtom.rep(min = 1, sep = HWS ~ "," ~/ HWS) ~/ HWS ~/ ">" ~/ Pass).?).
-    map{case (name, params) => Seq(ImportStatement(name.mkString("/"), params.getOrElse(Nil).toList))}
+    map{case (p, name, params) => Seq(ImportStatement(name.mkString("/"), params.getOrElse(Nil).toList).pos(p))}
 
   val optimizationHintsDeclaration: P[Set[String]] =
       ("!" ~/ HWS ~/ identifier ~/ "").rep(min = 0, sep = AWS).map { _.toSet }
@@ -233,6 +238,7 @@ abstract class MfParser[T](fileId: String, input: String, currentDirectory: Stri
     }
 
   def variableDefinition(implicitlyGlobal: Boolean): P[Seq[BankedDeclarationStatement]] = for {
+    docComment <- (docComment ~ EOL).?
     p <- position("variable definition")
     bank <- bankDeclaration
     flags <- variableFlags ~ HWS
@@ -248,7 +254,7 @@ abstract class MfParser[T](fileId: String, input: String, currentDirectory: Stri
       constant = flags("const"),
       volatile = flags("volatile"),
       register = flags("register"),
-      initialValue, addr, optimizationHints, alignment).pos(p)
+      initialValue, addr, optimizationHints, alignment).pos(p).docComment(docComment)
     }
   }
 
@@ -380,11 +386,12 @@ abstract class MfParser[T](fileId: String, input: String, currentDirectory: Stri
   def arrayContentsForAsm: P[RawBytesStatement] = (arrayListContents | arrayStringContents).map(c => RawBytesStatement(c, options.isBigEndian))
 
   val aliasDefinition: P[Seq[AliasDefinitionStatement]] = for {
+    docComment <- (docComment ~ EOL).?
     p <- position("alias definition")
     name <- "alias" ~ !letterOrDigit ~/ SWS ~ identifier ~ HWS
     target <- "=" ~/ AWS ~/ identifier ~/ HWS
     important <- "!".!.? ~/ HWS
-  } yield Seq(AliasDefinitionStatement(name, target, important.isDefined).pos(p))
+  } yield Seq(AliasDefinitionStatement(name, target, important.isDefined).pos(p).docComment(docComment))
 
   def fastAlignmentForArrays: MemoryAlignment
   def fastAlignmentForFunctions: MemoryAlignment
@@ -691,6 +698,7 @@ abstract class MfParser[T](fileId: String, input: String, currentDirectory: Stri
   } yield Seq(DoWhileStatement(body.toList, Nil, condition))
 
   val functionDefinition: P[Seq[BankedDeclarationStatement]] = for {
+    docComment <- (docComment ~ AWS).?
     p <- position("function definition")
     bank <- bankDeclaration
     flags <- functionFlags ~ HWS
@@ -759,7 +767,7 @@ abstract class MfParser[T](fileId: String, input: String, currentDirectory: Stri
       flags("interrupt"),
       flags("kernal_interrupt"),
       flags("const") && !flags("asm"),
-      flags("reentrant")).pos(p))
+      flags("reentrant")).pos(p).docComment(docComment))
   }
 
   def validateAsmFunctionBody(p: Position, flags: Set[String], name: String, statements: Option[List[Statement]])
