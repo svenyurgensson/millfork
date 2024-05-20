@@ -777,8 +777,8 @@ abstract class AbstractAssembler[T <: AbstractCode](private val program: Program
           // assembly += f"$l%-30s = $$$v%04X" // FIXED:
           val lll = l.replace('#', '_')
           val llll = lll.stripSuffix(".array")
-          assembly += f"$lll%-30s EQU 0x$v%04X"
-          if (lll != llll) { assembly += f"$llll%-30s EQU 0x$v%04X" }
+          assembly += f";$lll%-30s EQU 0x$v%04X"
+          if (lll != llll) { assembly += f"'$llll%-30s EQU 0x$v%04X" }
       }
     }
     allLabelList.sortBy { case (a, (_, v)) => v -> a }.foreach { case (l, (_, v)) =>
