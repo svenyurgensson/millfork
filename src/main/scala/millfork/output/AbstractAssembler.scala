@@ -239,7 +239,8 @@ abstract class AbstractAssembler[T <: AbstractCode](private val program: Program
 
     val optimizations = unfilteredOptimizations.filter(_.requiredFlags.forall(options.flag))
 
-    val assembly = mutable.ArrayBuffer[String]()
+    val assembly = mutable.ArrayBuffer[String]()    
+    platform.assClarifications.apply("prologue").map { assembly.append(_) } // FIXED: 
 
     val inliningResult = inliningCalculator.calculate(
         program,
@@ -251,6 +252,7 @@ abstract class AbstractAssembler[T <: AbstractCode](private val program: Program
         if (options.flags(CompilationFlag.OptimizeForSonicSpeed)) 12.0
         else if (options.flags(CompilationFlag.OptimizeForSpeed)) 8.0
         else 1.2)
+    log.debug(s"Inlining calculated result: $inliningResult")
 
     val potentiallyInlineable: Map[String, Int] = inliningResult.potentiallyInlineableFunctions
     var functionsThatCanBeCalledFromInlinedFunctions: Set[String] = inliningResult.nonInlineableFunctions
@@ -888,9 +890,7 @@ abstract class AbstractAssembler[T <: AbstractCode](private val program: Program
     val printLineNumbers = options.flag(CompilationFlag.LineNumbersInAssembly)
     val sourceInAssembly = options.flag(CompilationFlag.SourceInAssembly)
     var index = startFrom
-    assOut.append(" ")
-    platform.assClarifications.apply("prologue").map { assOut.append(_) } // FIXED: 
-    assOut.append(startFrom.formatted("    ORG %#x")) // FIXED: 
+    assOut.append(startFrom.formatted("    ORG %#x")) // FIXED:
 
     var lastSource = Option.empty[SourceLine]
     for (instr <- code) {
