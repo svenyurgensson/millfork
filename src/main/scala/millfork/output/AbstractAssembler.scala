@@ -808,8 +808,11 @@ abstract class AbstractAssembler[T <: AbstractCode](private val program: Program
       }
     }
     
-    val epilogue: String = platform.assClarifications.apply("epilogue").head // first element SAVESNA usually
-    assembly += epilogue.format(mem.programName)
+    platform.assClarifications.get("epilogue") match {
+      case Some(e)  if e.nonEmpty =>
+        assembly += e.head.format(mem.programName)
+      case _ => 
+    }
 
     AssemblerOutput(code, bankLayoutInFile, assembly.toArray, labelMap.toList, endLabelMap.toMap, breakpointSet.toList.sorted)
   }
