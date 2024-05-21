@@ -19,14 +19,14 @@ abstract class AbstractStatementPreprocessor(protected val ctx: CompilationConte
   type VV = Map[String, Constant]
   protected val optimize = true // TODO
   protected val env: Environment = ctx.env
-  protected val localPrefix: String = ctx.function.name + "#" // FIXED: $->#
+  protected val localPrefix: String = ctx.function.name + "__" // FIXED: $->__
   protected val usedIdentifiers: immutable.Iterable[String] with (Nothing => Any) = if (optimize) statements.flatMap(_.getAllExpressions).flatMap(_.getAllIdentifiers) else Set()
   protected val trackableVars: Set[String] = if (optimize) {
     env.getAllLocalVariables
       .filterNot(_.typ.isSigned) // sadly, tracking loses signedness
       .map(_.name.stripPrefix(localPrefix))
       .filterNot(_.contains("."))
-      .filterNot(_.contains("#")) // FIXED: $->#
+      .filterNot(_.contains("__")) // FIXED: $->__
       .filterNot { vname =>
         val prefix = vname + "."
         usedIdentifiers.exists(_.startsWith(prefix))

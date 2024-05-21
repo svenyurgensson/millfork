@@ -820,7 +820,7 @@ abstract class AbstractAssembler[T <: AbstractCode](private val program: Program
   }
 
   private def printArrayToAssemblyOutput(assembly: ArrayBuffer[String], name: String, elementType: Type, items: Seq[Expression]): Unit = {
-    if (name.startsWith("textliteral#")) { // FIXED: $->#
+    if (name.startsWith("textliteral__")) { // FIXED: $->__
       var suffix = ""
       var chars = items.lastOption match {
         case Some(LiteralExpression(0, _)) =>

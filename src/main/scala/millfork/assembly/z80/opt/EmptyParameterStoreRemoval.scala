@@ -17,13 +17,13 @@ object EmptyParameterStoreRemoval extends AssemblyOptimization[ZLine] {
   override def optimize(f: NormalFunction, code: List[ZLine], optimizationContext: OptimizationContext): List[ZLine] = {
     val usedFunctions = code.flatMap {
       case ZLine0(CALL | JP | JR, _, MemoryAddressConstant(th)) => Some(th.name)
-      case ZLine0(CALL | JP | JR, _, NumericConstant(addr, _)) => Some("#" + addr.toHexString) // FIXED: $->#
+      case ZLine0(CALL | JP | JR, _, NumericConstant(addr, _)) => Some("__" + addr.toHexString) // FIXED: $->__
       case _ => None
     }.toSet
     val foreignVariables = f.environment.root.things.values.flatMap {
       case other: NormalFunction =>
         val address = other.address match {
-          case Some(NumericConstant(addr, _)) => "#" + addr.toHexString // FIXED: $->#
+          case Some(NumericConstant(addr, _)) => "__" + addr.toHexString // FIXED: $->__
           case _ => ""
         }
         if (other.name == f.name || usedFunctions(other.name) || usedFunctions(address)) {

@@ -1296,7 +1296,7 @@ class Environment(val parent: Option[Environment], val prefix: String, val cpuFa
       // let's hope nothing goes wrong with this:
       get[FunctionInMemory](stmt.name.stripSuffix(".trampoline")).environment
     } else {
-      new Environment(Some(this), name + "#", cpuFamily, options) // FIXED: $->#
+      new Environment(Some(this), name + "__", cpuFamily, options) // FIXED: $->__
     }
     stmt.params.foreach(p => env.registerParameter(p, options, pointies))
     def params: ParamSignature = if (stmt.assembly || stmt.isMacro) {
@@ -1507,7 +1507,7 @@ class Environment(val parent: Option[Environment], val prefix: String, val cpuFa
   }
 
   def getTextLiteralArrayName(literal: TextLiteralExpression): String = {
-    val name = "textliteral#" ++ literal.characters.flatMap { // FIXED: $->#
+    val name = "textliteral__" ++ literal.characters.flatMap { // FIXED: $->__
       case LiteralExpression(n, _) =>
         f"$n%02x"
       case _ => ???
