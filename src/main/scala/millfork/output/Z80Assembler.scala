@@ -151,6 +151,11 @@ class Z80Assembler(program: Program,
         requireZ80()
         writeByte(bank, index, 8)
         index + 1
+      case ZLine0(INF, NoRegisters, _) =>
+        requireExtended80()
+        writeByte(bank, index, 0xed)
+        writeByte(bank, index + 1, 0x70)
+        index + 2
       case ZLine0(RETI, NoRegisters, _) =>
         requireExtended80()
         if (useSharpOpcodes()) {

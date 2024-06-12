@@ -1,6 +1,7 @@
 package millfork.parser
 
 import java.util.Locale
+import java.lang.Integer.parseInt
 
 import fastparse.all.{parserApi, _}
 import fastparse.core
@@ -53,7 +54,17 @@ case class Z80Parser(filename: String,
 
   val asmLabel: P[ExecutableStatement] = ((".".? ~ identifier).! ~ HWS ~ ":" ~/ AWS_asm).map(l => Z80AssemblyStatement(ZOpcode.LABEL, NoRegisters, None, VariableExpression(l), elidability = Elidability.Elidable))
 
+  private val decimalDigits: P[String] = CharsWhileIn("0123456789", min = 1).!
+
   val asmMacro: P[ExecutableStatement] = ("+" ~/ HWS ~/ functionCall(false)).map(ExpressionStatement)
+
+  val asmRepMacro: P[List[ExecutableStatement]] = for { // TODO 
+      digits <- "+" ~/ decimalDigits ~/ HWS
+      exp <- functionCall(false)
+  } yield {
+        val value = parseInt(digits, 10)
+        (1 to value).map{ i => ExpressionStatement(exp) }.toList
+    }
 
   private val toRegister: Map[String, ZRegister.Value] = Map(
     "A" -> ZRegister.A, "a" -> ZRegister.A,
@@ -376,6 +387,7 @@ case class Z80Parser(filename: String,
         case "CPIR" => imm(CPIR)
         case "CPDR" => imm(CPDR)
         case "INI" => imm(INI)
+        case "INF" => imm(INF)
         case "IND" => imm(IND)
         case "INIR" => imm(INIR)
         case "INDR" => imm(INDR)
@@ -894,6 +906,8 @@ case class Z80Parser(filename: String,
     P("").map(_=>(opcode, OneRegister(ZRegister.A), None, zero))
 
   override val asmStatement: P[ExecutableStatement] = (position("assembly statement") ~ P(asmLabel | asmMacro | arrayContentsForAsm | asmInstruction)).map { case (p, s) => s.pos(p) } // TODO: macros
+
+  override def asmStatements: P[List[ExecutableStatement]] = ("{" ~/ AWS_asm ~/ (asmLabel.rep() ~ asmStatement.?).rep(sep = NoCut(EOL_asm) ~ !"}" ~/ Pass) ~/ AWS_asm ~/ "}" ~/ Pass).map(e => e.flatMap(x => (x._1 ++ x._2.toSeq).toList)).map(_.toList)
 
   override def validateAsmFunctionBody(p: Position, flags: Set[String], name: String, statements: Option[List[Statement]]): Unit = {
     if (!options.flag(CompilationFlag.BuggyCodeWarning)) return

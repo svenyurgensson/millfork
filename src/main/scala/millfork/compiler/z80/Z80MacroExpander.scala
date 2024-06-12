@@ -35,7 +35,7 @@ object Z80MacroExpander extends MacroExpander[ZLine] {
               a.copy(expression = expr.replaceVariable(ph, actualParam))
             case x => x
           }
-        case (AssemblyOrMacroParam(typ, Placeholder(ph, phType), AssemblyParameterPassingBehaviour.ByConstant), actualParam) =>
+        case (AssemblyOrMacroParam(typ, Placeholder(ph, phType), AssemblyParameterPassingBehaviour.ByConstant), actualParam) =>          
           ctx.env.eval(actualParam).getOrElse(ctx.env.errorConstant("Non-constant expression was passed to an inlineable function as a `const` parameter", Some(actualParam), actualParam.position))
           actualCode = actualCode.map {
             case a@Z80AssemblyStatement(_, _, _, expr, _) =>

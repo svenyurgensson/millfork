@@ -9,7 +9,7 @@ object ZOpcode extends Enumeration {
   INC, DEC,
   LD_16, ADD_16, ADC_16, SBC_16, INC_16, DEC_16,
   IN_IMM, IN_C, OUT_IMM, OUT_C,
-  INI, INIR, OUTI, OUTIR, IND, INDR, OUTD, OUTDR,
+  INI, INIR, OUTI, OUTIR, IND, INDR, OUTD, OUTDR, INF,
   LDI, LDIR, LDD, LDDR,
   CPI, CPIR, CPD, CPDR,
   SCF, CCF, DAA, CPL, NEG,
@@ -69,7 +69,7 @@ object ZOpcodeClasses {
     MULUB, MULUW,
     LDH_AC, LDH_AD, LD_AHLI, LD_AHLD,
     ADD_16, ADC_16, SBC_16, INC_16, DEC_16,
-    INI, INIR, OUTI, OUTIR, IND, INDR, OUTD, OUTDR,
+    INI, INIR, OUTI, OUTIR, IND, INDR, OUTD, OUTDR, INF,
     LDI, LDIR, LDD, LDDR, CPI, CPIR, CPD, CPDR,
     EXX, CALL, JR, JP, LABEL, DJNZ)
   val ChangesBCAlways: Set[ZOpcode.Value] = Set(
