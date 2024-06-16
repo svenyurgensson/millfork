@@ -239,8 +239,8 @@ abstract class AbstractAssembler[T <: AbstractCode](private val program: Program
 
     val optimizations = unfilteredOptimizations.filter(_.requiredFlags.forall(options.flag))
 
-    val assembly = mutable.ArrayBuffer[String]()    
-    platform.assClarifications.apply("prologue").map { assembly.append(_) } // FIXED: 
+    val assembly = mutable.ArrayBuffer[String]()
+    platform.assClarifications.apply("prologue").map { assembly.append(_) } // FIXED:
 
     val inliningResult = inliningCalculator.calculate(
         program,
@@ -767,13 +767,16 @@ abstract class AbstractAssembler[T <: AbstractCode](private val program: Program
 
     val allLabelList = labelMap.toList // FIXED: ++ unimportantLabelMap.toList
     allLabelList.sorted.foreach { case (l, (_, v)) =>
-      val ll = l.stripSuffix(".array") // FIXED: 
+      val ll = l.stripSuffix(".array") // FIXED:
       endLabelMap.get(l) match {
         case Some((category, end)) =>
           // assembly += f"$l%-30s = $$$v%04X  ;-$$$end%04X $category%s" // FIXED:
           if (category != 'F' && category != 'A' && category != 'V') {
-              assembly += f"$l%-30s EQU 0x$v%04X  ;-$$$end%04X $category%s" 
+              assembly += f"$l%-30s EQU 0x$v%04X  ;-$$$end%04X $category%s"
               if (l != ll) { assembly += f"$ll%-30s EQU 0x$v%04X  ;-$$$end%04X $category%s" }
+          }
+          if (category == 'A') {
+              assembly += f"$ll%-30s EQU 0x$v%04X  ;-$$$end%04X $category%s"
           }
         case _ =>
           // assembly += f"$l%-30s = $$$v%04X" // FIXED:
@@ -809,11 +812,11 @@ abstract class AbstractAssembler[T <: AbstractCode](private val program: Program
         }
       }
     }
-    
+
     platform.assClarifications.get("epilogue") match {
       case Some(e)  if e.nonEmpty =>
-        assembly += e.head.format(mem.programName)
-      case _ => 
+        e.map { ee => assembly += ee.format(mem.programName)}
+      case _ =>
     }
 
     AssemblerOutput(code, bankLayoutInFile, assembly.toArray, labelMap.toList, endLabelMap.toMap, breakpointSet.toList.sorted)
@@ -903,7 +906,7 @@ abstract class AbstractAssembler[T <: AbstractCode](private val program: Program
                 if (sourceInAssembly) {
                   assOut.append("; ")
                 }
-                assOut.append(s";line:$lineNo:$moduleName")
+                assOut.append(s";$moduleName:$lineNo")
                 if (sourceInAssembly) {
                   log.getLine(sl).foreach(l => assOut.append(";   " + l))
                 }

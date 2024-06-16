@@ -449,13 +449,29 @@ class Z80Assembler(program: Program,
             requireZ80()
             writeByte(bank, index, prefixByte(ix))
             writeByte(bank, index + 1, 0x40 + internalRegisterIndex(source) + internalRegisterIndex(ZRegister.MEM_HL) * 8)
-            writeByte(bank, index + 2, offset)
+            var offs = offset
+            (offset < 0) match {
+              case true =>
+                offs = 128 + offset
+              case false =>
+                offs = offset
+            }
+            if (offs > 128) log.error(s"Offset error: $offs, $instr")
+            writeByte(bank, index + 2, offs)
             index + 3
           case TwoRegistersOffset(target, ix@(ZRegister.MEM_IX_D | ZRegister.MEM_IY_D), offset) =>
             requireZ80()
             writeByte(bank, index, prefixByte(ix))
             writeByte(bank, index + 1, 0x40 + internalRegisterIndex(ZRegister.MEM_HL) + internalRegisterIndex(target) * 8)
-            writeByte(bank, index + 2, offset)
+            var offs = offset
+            (offset < 0) match {
+              case true =>
+                offs = 128 + offset
+              case false =>
+                offs = offset
+            }
+            if (offs > 128) log.error(s"Offset error: $offs, $instr")
+            writeByte(bank, index + 2, offs)
             index + 3
           case TwoRegisters(target@(IXH | IYH | IXL | IYL), source@(A | B | C | D | E)) =>
             requireR800OrIllegals()

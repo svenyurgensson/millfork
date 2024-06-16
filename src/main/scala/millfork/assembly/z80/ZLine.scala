@@ -300,8 +300,18 @@ case class ZLine(opcode: ZOpcode.Value, registers: ZRegisters, parameter: Consta
     case ZRegister.MEM_ABS_16 => s"($parameter)"
     case ZRegister.IMM_8 => s"$parameter"
     case ZRegister.IMM_16 => s"$parameter"
-    case ZRegister.MEM_IX_D => s"IX($offset)"
-    case ZRegister.MEM_IY_D => s"IY($offset)"
+    case ZRegister.MEM_IX_D => (offset >= 0) match {
+      case true => s"(IX+$offset)"
+      case false =>
+        val abs_offs = offset.abs
+        s"(IX-$abs_offs)"
+    }
+    case ZRegister.MEM_IY_D => (offset >= 0) match {
+      case true => s"(IY+$offset)"
+      case false =>
+        val abs_offs = offset.abs
+        s"(IY-$abs_offs)"
+    }
     case ZRegister.MEM_HL => "(HL)"
     case ZRegister.MEM_BC => "(BC)"
     case ZRegister.MEM_DE => "(DE)"
@@ -646,14 +656,14 @@ case class ZLine(opcode: ZOpcode.Value, registers: ZRegisters, parameter: Consta
       case CPD => "    CCD"
       case CPDR => "    CCDR"
       case RET => registers match {
-        case NoRegisters => "    RET" 
+        case NoRegisters => "    RET"
         case IfFlagClear(ZFlag.C) => "    RNC"
         case IfFlagClear(ZFlag.Z) => "    RNZ"
         case IfFlagClear(ZFlag.S) => "    RP"
         case IfFlagClear(ZFlag.P) => "    RPO"
         case IfFlagSet(ZFlag.C) => "    RC"
-        case IfFlagSet(ZFlag.Z) => "    RZ" 
-        case IfFlagSet(ZFlag.S) => "    RM" 
+        case IfFlagSet(ZFlag.Z) => "    RZ"
+        case IfFlagSet(ZFlag.S) => "    RM"
         case IfFlagSet(ZFlag.P) => "    RPE"
         case _ => "???"
       }
@@ -668,8 +678,8 @@ case class ZLine(opcode: ZOpcode.Value, registers: ZRegisters, parameter: Consta
         case IfFlagClear(ZFlag.P) => s"    JPO ${parameter.toIntelString}"
         case IfFlagClear(ZFlag.K) => s"    JNK ${parameter.toIntelString}"
         case IfFlagSet(ZFlag.C) => s"    JC ${parameter.toIntelString}"
-        case IfFlagSet(ZFlag.Z) => s"    JZ ${parameter.toIntelString}" 
-        case IfFlagSet(ZFlag.S) => s"    JM ${parameter.toIntelString}" 
+        case IfFlagSet(ZFlag.Z) => s"    JZ ${parameter.toIntelString}"
+        case IfFlagSet(ZFlag.S) => s"    JM ${parameter.toIntelString}"
         case IfFlagSet(ZFlag.P) => s"    JPE ${parameter.toIntelString}"
         case IfFlagSet(ZFlag.K) => s"    JK ${parameter.toIntelString}"
         case _ => "???"
@@ -690,8 +700,8 @@ case class ZLine(opcode: ZOpcode.Value, registers: ZRegisters, parameter: Consta
         case IfFlagClear(ZFlag.S) => s"    CP ${parameter.toIntelString}"
         case IfFlagClear(ZFlag.P) => s"    CPO ${parameter.toIntelString}"
         case IfFlagSet(ZFlag.C) => s"    CC ${parameter.toIntelString}"
-        case IfFlagSet(ZFlag.Z) => s"    CZ ${parameter.toIntelString}" 
-        case IfFlagSet(ZFlag.S) => s"    CM ${parameter.toIntelString}" 
+        case IfFlagSet(ZFlag.Z) => s"    CZ ${parameter.toIntelString}"
+        case IfFlagSet(ZFlag.S) => s"    CM ${parameter.toIntelString}"
         case IfFlagSet(ZFlag.P) => s"    CPE ${parameter.toIntelString}"
         case _ => "???"
       }
