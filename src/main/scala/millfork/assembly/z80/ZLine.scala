@@ -379,7 +379,11 @@ case class ZLine(opcode: ZOpcode.Value, registers: ZRegisters, parameter: Consta
       case IN_IMM => s"    IN A,($parameter)"
       case IN_C => s"    IN A,(C)"
       case OUT_IMM => s"    OUT ($parameter),A"
-      case OUT_C => s"    OUT (C),a"
+      case OUT_C => registers match {
+        case NoRegisters => s"    OUT (C),A"
+        case OneRegister(r) => s"    OUT (C),${asAssemblyString(r)}"
+        case _ => ???
+      }
       case EX_AF_AF => "    EX AF,AF'"
       case EX_DE_HL => "    EX DE,HL"
       case LD_AHLI => "    LD A,(HLI)"
