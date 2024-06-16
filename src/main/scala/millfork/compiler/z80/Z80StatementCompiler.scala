@@ -215,12 +215,16 @@ object Z80StatementCompiler extends AbstractStatementCompiler[ZLine] {
         }
       case ExpressionStatement(e) =>
         Z80ExpressionCompiler.compile(ctx, e, ZExpressionTarget.NOTHING) -> Nil
+      case RepExpressionStatement(e, rep) => {
+          Z80ExpressionCompiler.repCompile(ctx, e, ZExpressionTarget.NOTHING, BranchSpec.None, rep)
+       } -> Nil
+
       case RawBytesStatement(contents, _) =>
-        env.extractArrayContents(contents).map { expr =>          
+        env.extractArrayContents(contents).map { expr =>
           env.eval(expr) match {
             case Some(c) => ZLine(BYTE, NoRegisters, c, elidability = Elidability.Fixed)
             case None =>
-              ctx.log.error("Non-constant raw byte", statement.position) // position = 
+              ctx.log.error("Non-constant raw byte", statement.position) // position =
               ZLine(BYTE, NoRegisters, Constant.Zero, elidability = Elidability.Fixed)
           }
         } -> Nil

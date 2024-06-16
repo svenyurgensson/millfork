@@ -58,12 +58,12 @@ case class Z80Parser(filename: String,
 
   val asmMacro: P[ExecutableStatement] = ("+" ~/ HWS ~/ functionCall(false)).map(ExpressionStatement)
 
-  val asmRepMacro: P[List[ExecutableStatement]] = for { // TODO 
-      digits <- "+" ~/ decimalDigits ~/ HWS
+  val asmRepMacro: P[ExecutableStatement] = for { // TODO
+      digits <- ("+" ~ decimalDigits).! ~/ HWS
       exp <- functionCall(false)
   } yield {
-        val value = parseInt(digits, 10)
-        (1 to value).map{ i => ExpressionStatement(exp) }.toList
+        var value = parseInt(digits, 10)
+        RepExpressionStatement(exp, value)
     }
 
   private val toRegister: Map[String, ZRegister.Value] = Map(
@@ -568,7 +568,7 @@ case class Z80Parser(filename: String,
             log.error("Invalid parameters for MULUW", Some(pos))
             (NOP, NoRegisters, None, zero)
         }
-        
+
         case _ =>
           log.error("Unsupported opcode " + opcode, Some(pos))
           imm(NOP)
@@ -636,7 +636,7 @@ case class Z80Parser(filename: String,
         case "SLLR" => one8RegisterIntel(SLL)
         case "SRAR" => one8RegisterIntel(SRA)
         case "SRLR" => one8RegisterIntel(SRL)
-          
+
         case "RALX" => asmExpression.map(d => (RL, OneRegister(MEM_IX_D), Some(d), zero))
         case "RARX" => asmExpression.map(d => (RR, OneRegister(MEM_IX_D), Some(d), zero))
         case "RLCX" => asmExpression.map(d => (RLC, OneRegister(MEM_IX_D), Some(d), zero))
@@ -645,7 +645,7 @@ case class Z80Parser(filename: String,
         case "SLLX" => asmExpression.map(d => (SLL, OneRegister(MEM_IX_D), Some(d), zero))
         case "SRAX" => asmExpression.map(d => (SRA, OneRegister(MEM_IX_D), Some(d), zero))
         case "SRLX" => asmExpression.map(d => (SRL, OneRegister(MEM_IX_D), Some(d), zero))
-          
+
         case "RALY" => asmExpression.map(d => (RL, OneRegister(MEM_IY_D), Some(d), zero))
         case "RARY" => asmExpression.map(d => (RR, OneRegister(MEM_IY_D), Some(d), zero))
         case "RLCY" => asmExpression.map(d => (RLC, OneRegister(MEM_IY_D), Some(d), zero))
@@ -819,7 +819,7 @@ case class Z80Parser(filename: String,
         case "JRNZ" => asmExpression.map { e => (JR, IfFlagClear(ZFlag.Z), None, e)}
         case "JRP" => asmExpression.map { e => (JR, IfFlagClear(ZFlag.S), None, e)}
         case "JRPO" => asmExpression.map { e => (JR, IfFlagClear(ZFlag.P), None, e)}
-          
+
         case "RET" => imm(RET)
         case "RC" => P("").map { _ => (RET, IfFlagSet(ZFlag.C), None, zero)}
         case "RZ" => P("").map { _ => (RET, IfFlagSet(ZFlag.Z), None, zero)}
@@ -829,7 +829,7 @@ case class Z80Parser(filename: String,
         case "RNZ" => P("").map { _ => (RET, IfFlagClear(ZFlag.Z), None, zero)}
         case "RP" => P("").map { _ => (RET, IfFlagClear(ZFlag.S), None, zero)}
         case "RPO" => P("").map { _ => (RET, IfFlagClear(ZFlag.P), None, zero)}
-          
+
         case "CALL" => asmExpression.map { e => (CALL, NoRegisters, None, e)}
         case "CC" => asmExpression.map { e => (CALL, IfFlagSet(ZFlag.C), None, e)}
         case "CZ" => asmExpression.map { e => (CALL, IfFlagSet(ZFlag.Z), None, e)}
@@ -905,10 +905,11 @@ case class Z80Parser(filename: String,
   private def regA(opcode: ZOpcode.Value): P[(ZOpcode.Value, ZRegisters, Option[Expression], Expression)] =
     P("").map(_=>(opcode, OneRegister(ZRegister.A), None, zero))
 
-  override val asmStatement: P[ExecutableStatement] = (position("assembly statement") ~ P(asmLabel | asmMacro | arrayContentsForAsm | asmInstruction)).map { case (p, s) => s.pos(p) } // TODO: macros
+  override val asmStatement: P[ExecutableStatement] = (position("assembly statement") ~ P(asmLabel | asmRepMacro | asmMacro | arrayContentsForAsm | asmInstruction)).map { case (p, s) => s.pos(p) } // TODO: macros
 
-  override def asmStatements: P[List[ExecutableStatement]] = ("{" ~/ AWS_asm ~/ (asmLabel.rep() ~ asmStatement.?).rep(sep = NoCut(EOL_asm) ~ !"}" ~/ Pass) ~/ AWS_asm ~/ "}" ~/ Pass).map(e => e.flatMap(x => (x._1 ++ x._2.toSeq).toList)).map(_.toList)
+  override def asmStatements: P[List[ExecutableStatement]] = ("{" ~/ AWS_asm ~/ (asmLabel.rep() ~ asmStatement.?).rep(sep = NoCut(EOL_asm) ~ !"}" ~/ Pass) ~/ AWS_asm  ~/ "}" ~/ Pass).map(e => e.flatMap(x => (x._1 ++ x._2.toSeq).toList)).map(_.toList)
 
+  //
   override def validateAsmFunctionBody(p: Position, flags: Set[String], name: String, statements: Option[List[Statement]]): Unit = {
     if (!options.flag(CompilationFlag.BuggyCodeWarning)) return
     statements match {

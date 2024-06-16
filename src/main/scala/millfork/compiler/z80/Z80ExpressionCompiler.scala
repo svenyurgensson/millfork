@@ -316,6 +316,10 @@ object Z80ExpressionCompiler extends AbstractExpressionCompiler[ZLine] {
     case ZExpressionTarget.NOTHING | ZExpressionTarget.DEHL => lines
   }
 
+  def repCompile(ctx: CompilationContext, expression: Expression, target: ZExpressionTarget.Value, branches: BranchSpec = BranchSpec.None, rep: Integer = 1): List[ZLine] = {
+    (for { i <- 1 to rep } yield compile(ctx, expression, target, branches)).toList.flatten
+  }
+
   def compile(ctx: CompilationContext, expression: Expression, target: ZExpressionTarget.Value, branches: BranchSpec = BranchSpec.None): List[ZLine] = {
     val env = ctx.env
     val b = env.get[Type]("byte")

@@ -212,7 +212,7 @@ case class HalfWordExpression(expression: Expression, hiByte: Boolean) extends E
     HalfWordExpression(expression.renameVariable(variable, newVariable), hiByte).pos(position)
   override def replaceVariable(variable: String, actualParam: Expression): Expression =
     HalfWordExpression(expression.replaceVariable(variable, actualParam), hiByte).pos(position)
-  override def replaceIndexedExpression(predicate: IndexedExpression => Boolean, replacement: IndexedExpression => Expression): Expression = 
+  override def replaceIndexedExpression(predicate: IndexedExpression => Boolean, replacement: IndexedExpression => Expression): Expression =
     HalfWordExpression(expression.replaceIndexedExpression(predicate, replacement), hiByte).pos(position)
   override def containsVariable(variable: String): Boolean = expression.containsVariable(variable)
   override def getPointies: Seq[String] = expression.getPointies
@@ -367,7 +367,7 @@ case class IndexedExpression(name: String, index: Expression) extends LhsExpress
       }
     } else IndexedExpression(name, index.replaceVariable(variable, actualParam)).pos(position)
   override def replaceIndexedExpression(predicate: IndexedExpression => Boolean, replacement: IndexedExpression => Expression): Expression =
-    if (predicate(this)) replacement(this).pos(position = position) 
+    if (predicate(this)) replacement(this).pos(position = position)
     else IndexedExpression(name, index.replaceIndexedExpression(predicate, replacement))
   override def containsVariable(variable: String): Boolean = name == variable || index.containsVariable(variable)
   override def getPointies: Seq[String] = Seq(name)
@@ -387,7 +387,7 @@ case class IndirectFieldExpression(root: Expression, firstIndices: Seq[Expressio
       root.replaceVariable(variable, actualParam),
       firstIndices.map(_.replaceVariable(variable, actualParam)),
       fields.map{case (dot, f, i) => (dot, f, i.map(_.replaceVariable(variable, actualParam)))})
-  
+
   override def replaceIndexedExpression(predicate: IndexedExpression => Boolean, replacement: IndexedExpression => Expression): Expression =
     IndirectFieldExpression(
       root.replaceIndexedExpression(predicate, replacement),
@@ -703,6 +703,9 @@ case class ExpressionStatement(expression: Expression) extends ExecutableStateme
   override def getAllExpressions: List[Expression] = List(expression)
 }
 
+case class RepExpressionStatement(expression: Expression, rep: Integer) extends ExecutableStatement {
+  override def getAllExpressions: List[Expression] = List(expression)
+}
 case class ReturnStatement(value: Option[Expression]) extends ExecutableStatement {
   override def getAllExpressions: List[Expression] = value.toList
   override def isValidFunctionEnd: Boolean = true
