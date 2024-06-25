@@ -413,8 +413,8 @@ case class ZLine(opcode: ZOpcode.Value, registers: ZRegisters, parameter: Consta
       case JP | JR | DJNZ | CALL =>
         val ps = registers match {
           case NoRegisters => s" $parameter"
-          case IfFlagSet(ZFlag.P) => s" PO,$parameter"
-          case IfFlagClear(ZFlag.P) => s" PE,$parameter"
+          case IfFlagSet(ZFlag.P) => s" PE,$parameter"
+          case IfFlagClear(ZFlag.P) => s" PO,$parameter"
           case IfFlagSet(ZFlag.S) => s" M,$parameter"
           case IfFlagClear(ZFlag.S) => s" P,$parameter"
           case IfFlagSet(f) => s" $f,$parameter"
