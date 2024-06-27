@@ -766,24 +766,24 @@ abstract class AbstractAssembler[T <: AbstractCode](private val program: Program
     assembly += "\n;   ---------- LABELS ----------\n"
 
     val allLabelList = labelMap.toList // FIXED: ++ unimportantLabelMap.toList
-    allLabelList.sorted.foreach { case (l, (_, v)) =>
-      val ll = l.stripSuffix(".array") // FIXED:
-      endLabelMap.get(l) match {
+    allLabelList.sorted.foreach { case (label, (_, v)) =>
+      val var_without_array_sfx = label.stripSuffix(".array") // FIXED:
+      endLabelMap.get(label) match {
         case Some((category, end)) =>
           // assembly += f"$l%-30s = $$$v%04X  ;-$$$end%04X $category%s" // FIXED:
           if (category != 'F' && category != 'A' && category != 'V') {
-              assembly += f"$l%-30s EQU 0x$v%04X  ;-$$$end%04X $category%s"
-              if (l != ll) { assembly += f"$ll%-30s EQU 0x$v%04X  ;-$$$end%04X $category%s" }
+              assembly += f"$label%-30s EQU 0x$v%04X  ;-$$$end%04X $category%s"
+              if (label != var_without_array_sfx) { assembly += f"$var_without_array_sfx%-30s EQU 0x$v%04X  ;-$$$end%04X $category%s" }
           }
           if (category == 'A') {
-              assembly += f"$ll%-30s EQU 0x$v%04X  ;-$$$end%04X $category%s"
+              assembly += f"$var_without_array_sfx%-30s EQU 0x$v%04X  ;-$$$end%04X $category%s"
           }
         case _ =>
           // assembly += f"$l%-30s = $$$v%04X" // FIXED:
-          val lll = l.replace('#', '_')
-          val llll = lll.stripSuffix(".array")
-          assembly += f";$lll%-30s EQU 0x$v%04X"
-          if (lll != llll) { assembly += f"'$llll%-30s EQU 0x$v%04X" }
+          val cleaned_label = label.replace('#', '_')
+          val cleaned_label_without_array_sfx = cleaned_label.stripSuffix(".array")
+          assembly += f";$cleaned_label%-30s EQU 0x$v%04X"
+          if (cleaned_label != cleaned_label_without_array_sfx) { assembly += f"'$cleaned_label_without_array_sfx%-30s EQU 0x$v%04X" }
       }
     }
     allLabelList.sortBy { case (a, (_, v)) => v -> a }.foreach { case (l, (_, v)) =>
